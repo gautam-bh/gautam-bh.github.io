@@ -1,16 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Portfolio</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS 180</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #ffc0cb;
+    color: #4b2067;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: #4b2067;
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  a.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    background: #b57edc;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.15s, transform 0.05s;
+  }
+  a.btn:hover { background: #9d64c9; }
+  a.btn:active { transform: translateY(1px); }
+  footer {
+    margin-top: 2.5rem;
+    color: #4b2067;
+    font-size: 0.85rem;
+  }
+</style>
 </head>
 <body>
-    <h1>Welcome to My CS180 Portfolio!</h1>
-    <a href="./1/index.html">Project 1</a>
+  <header>
+    <h1>CS 180 Projects Webpage</h1>
+    <p>Intro to Computer Vision &amp; Computational Photography</p>
+  </header>
+ 
+  <nav class="stack">
+    <a class="btn" href="project0.html">Project 0</a>
+    <a class="btn" href="project1.html">Project 1</a>
+    <a class="btn" href="project2.html">Project 2</a>
+    <a class="btn" href="project3.html">Project 3</a>
+    <a class="btn" href="project4.html">Project 4</a>
+    <a class="btn" href="final.html">Final Project</a>
+  </nav>
+ 
+  <footer>UC Berkeley</footer>
 </body>
 </html>
