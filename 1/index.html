@@ -16,17 +16,23 @@
     <h2>Single-Scale Alignment</h2>
     <div class="img-row">
       <figure>
-        <img src="media/me_close.jpeg" alt="Close-up me">
-        <figcaption>Close up selfie</figcaption>
+        <img src="simple_output/out_cathedral.jpg" alt="simple_cathedral">
+        <figcaption>A single-scale alignment of a cathedral</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far.jpeg" alt="Far me">
-        <figcaption>Zoomed in selfie</figcaption>
+        <img src="simple_output/out_monastery.jpg" alt="simple_monastery">
+        <figcaption>A single-scale alignment of a monastery</figcaption>
+      </figure>
+      <figure>
+        <img src="simple_output/out_tobolsk.jpg" alt="simple_tobolsk">
+        <figcaption>A single-scale alignment of a tobolsk</figcaption>
       </figure>
     </div>
-    <p>The second photo seemingly looks better than the first, likely because lighting is more "natural", rather than being from the phone/laptop's
-      blue light. Additionally, being close up proportionally increases the size of parts of your body that are close to the lens. This makes 
-      unnatural proportions, which are indistinguishable in the zoomed-in picture.</p>
+    <p>The single-scale alignment was done using a Euclidean distance (L2) loss metric. Essentially, two seperated arrays indicating the intensity
+    by color were separated then aligned, by cropping the edges of each (to remove the borders). Then, they were moved along each other by 15 pixels
+    in every direction, with the loss metric computed at each position. The alignment with the lowest loss metric was then considered the "correct"
+    alignment. After alignments were done for the green and blue slides, and the red and blue slides, they were all stacked to reproduce the 
+    image in color.</p>
     
   </main>
 </body>
