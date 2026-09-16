@@ -16,17 +16,188 @@
     <h2>Single-Scale Alignment</h2>
     <div class="img-row">
       <figure>
-        <img src="media/me_close.jpeg" alt="Close-up me">
-        <figcaption>Close up selfie</figcaption>
+        <img src="simple_output/out_cathedral.jpg" alt="simple_cathedral">
+        <figcaption>A single-scale alignment of a cathedral</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far.jpeg" alt="Far me">
-        <figcaption>Zoomed in selfie</figcaption>
+        <img src="simple_output/out_monastery.jpg" alt="simple_monastery">
+        <figcaption>A single-scale alignment of a monastery</figcaption>
+      </figure>
+      <figure>
+        <img src="simple_output/out_tobolsk.jpg" alt="simple_tobolsk">
+        <figcaption>A single-scale alignment of Tobolsk</figcaption>
       </figure>
     </div>
-    <p>The second photo seemingly looks better than the first, likely because lighting is more "natural", rather than being from the phone/laptop's
-      blue light. Additionally, being close up proportionally increases the size of parts of your body that are close to the lens. This makes 
-      unnatural proportions, which are indistinguishable in the zoomed-in picture.</p>
+    <p>The single-scale alignment was done using a Euclidean distance (L2) loss metric. Essentially, two seperated arrays indicating the intensity
+    by color were separated then aligned, by cropping the edges of each (20%, to remove the borders). Then, they were moved along each other by 15 pixels
+    in every direction, with the loss metric computed at each position. The alignment with the lowest loss metric was then considered the "correct"
+    alignment. After alignments were done for the green and blue slides, and the red and blue slides, they were all stacked to reproduce the 
+    image in color.</p>
+
+    <h2>Multi-Scale Alignment</h2>
+    <div class="img-row">
+      <figure>
+        <img src="output/out_cathedral.jpg" alt="complex_cathedral">
+        <figcaption>Colorized cathedral</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_church.jpg" alt="complex_church">
+        <figcaption>Colorized church</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_emir.jpg" alt="complex_emir">
+        <figcaption>Colorized Emir of Bukhara</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_harvesters.jpg" alt="complex_harvesters">
+        <figcaption>Colorized harvester</figcaption>
+      </figure>
+    </div>
+    <div class="img-row">
+      <figure>
+        <img src="output/out_icon.jpg" alt="complex_icon">
+        <figcaption>Colorized icon</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_ilemselga.jpg" alt="complex_ilemselga">
+        <figcaption>Colorized Ilemselga</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_melons.jpg" alt="complex_melons">
+        <figcaption>Colorized Melon stand</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_monastery.jpg" alt="complex_monastery">
+        <figcaption>Colorized monastery</figcaption>
+      </figure>
+    </div>
+    <div class="img-row">
+      <figure>
+        <img src="output/out_religious_painting.jpg" alt="complex_religious_painting">
+        <figcaption>Colorized religious painting</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_self_portrait.jpg" alt="complex_self_portrait">
+        <figcaption>Colorized self portrait</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_siren.jpg" alt="complex_siren">
+        <figcaption>Colorized Lilacs</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_three_generations.jpg" alt="complex_three_generations">
+        <figcaption>Colorized three generations of a family</figcaption>
+      </figure>
+    </div>
+    <div class="img-row">
+      <figure>
+        <img src="output/tobolsk.jpg" alt="complex_tobolsk">
+        <figcaption>Colorized Tobolsk</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_wharf.jpg" alt="complex_wharf">
+        <figcaption>Colorized wharf</figcaption>
+      </figure>
+    </div>
+    <p>Single-scale alignment fails for larger images, called .tifs, since testing alignments and computing loss across the massive amounts of
+    data in them costs a significant amount of compute. So, to better analyze images without computing loss on the entire structure, an image
+    pyramid is used. Essentially, the program first recursively halves the width and height of images by averaging all relevant pixels, until 
+    reaching a certain size where complete alignment is possible (500 pixels in my case). This was done after originally removing edge areas
+    using the Sobel filter. After the recursion to the coarse-feature image, the two frames are aligned (by checking loss at 35 pixels in every 
+    direction). This not only defines a rough displacement, but also a local area to search, which is then searched iteratively through lower/less
+    course levels to fine tune the alignment until reaching the final layer. By only searching a local area, the algorithm avoids the major
+    compute demands necessitated by a complete overall alignment. The alignments for each image are listed in the table below, with "green shift"
+    indicating how much the green slide had to shift to align with blue, as was the case for "red shift". They are in the form of (dy,dx)</p>
+
+    <table>
+  <thead>
+    <tr>
+      <th>Image</th>
+      <th>Green Shift</th>
+      <th>Red Shift</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Monastery</td>
+      <td>(15, -7)</td>
+      <td>(3, 2)</td>
+    </tr>
+    <tr>
+      <td>Tobolsk</td>
+      <td>(3, 3)</td>
+      <td>(6, 3)</td>
+    </tr>
+    <tr>
+      <td>Cathedral</td>
+      <td>(5, 2)</td>
+      <td>(12, 3)</td>
+    </tr>
+    <tr>
+      <td>Wharf</td>
+      <td>(15, -7)</td>
+      <td>(83, -16)</td>
+    </tr>
+    <tr>
+      <td>Emir</td>
+      <td>(49, 24)</td>
+      <td>(107, 40)</td>
+    </tr>
+    <tr>
+      <td>Monastery</td>
+      <td>(3, 3)</td>
+      <td>(6, 3)</td>
+    </tr>
+    <tr>
+      <td>Cathedral</td>
+      <td>(-3, 2)</td>
+      <td>(3, 2)</td>
+    </tr>
+    <tr>
+      <td>Religious Painting</td>
+      <td>(30, 7)</td>
+      <td>(70, 6)</td>
+    </tr>
+    <tr>
+      <td>Chruch</td>
+      <td>(25, 4)</td>
+      <td>(58, -4)</td>
+    </tr>
+    <tr>
+      <td>Three Generations</td>
+      <td>(54, 12)</td>
+      <td>(111, 9)</td>
+    </tr>
+    <tr>
+      <td>Melons</td>
+      <td>(80, 10)</td>
+      <td>(177, 13)</td>
+    </tr>
+    <tr>
+      <td>Icon</td>
+      <td>(42, 17)</td>
+      <td>(90, 23)</td>
+    </tr><tr>
+      <td>Lilacs</td>
+      <td>(49, -6)</td>
+      <td>(96, -24)</td>
+    </tr>
+    <tr>
+      <td>Self Portrait</td>
+      <td>(78, 29)</td>
+      <td>(176, 37)</td>
+    </tr><tr>
+      <td>Harvesters</td>
+      <td>(60, 17)</td>
+      <td>(174, 14)</td>
+    </tr>
+    <tr>
+      <td>Ilemselga</td>
+      <td>(40, 7)</td>
+      <td>(131, 11)</td>
+    </tr>  
+  </tbody>
+</table>
     
   </main>
 </body>
