@@ -28,7 +28,8 @@
         <figcaption>A single-scale alignment of Tobolsk</figcaption>
       </figure>
     </div>
-    <p>The single-scale alignment was done using a Euclidean distance (L2) loss metric. Essentially, two seperated arrays indicating the intensity
+    <p>The single-scale alignment was done using a Euclidean distance (L2) loss metric. This is calculated by taking the sum of the squared difference
+      of the values of pixels for every pixel in the two slides. Essentially, two seperated arrays indicating the intensity
     by color were separated then aligned, by cropping the edges of each (20%, to remove the borders). Then, they were moved along each other by 15 pixels
     in every direction, with the loss metric computed at each position. The alignment with the lowest loss metric was then considered the "correct"
     alignment. After alignments were done for the green and blue slides, and the red and blue slides, they were all stacked to reproduce the 
@@ -73,7 +74,7 @@
     </div>
     <div class="img-row">
       <figure>
-        <img src="output/out_religious_painting.jpg" alt="complex_religious_painting">
+        <img src="output/out_religous_painting.jpg" alt="complex_religious_painting">
         <figcaption>Colorized religious painting</figcaption>
       </figure>
       <figure>
@@ -91,7 +92,7 @@
     </div>
     <div class="img-row">
       <figure>
-        <img src="output/tobolsk.jpg" alt="complex_tobolsk">
+        <img src="output/out_tobolsk.jpg" alt="complex_tobolsk">
         <figcaption>Colorized Tobolsk</figcaption>
       </figure>
       <figure>
@@ -107,7 +108,7 @@
     direction). This not only defines a rough displacement, but also a local area to search, which is then searched iteratively through lower/less
     course levels to fine tune the alignment until reaching the final layer. By only searching a local area, the algorithm avoids the major
     compute demands necessitated by a complete overall alignment. The alignments for each image are listed in the table below, with "green shift"
-    indicating how much the green slide had to shift to align with blue, as was the case for "red shift". They are in the form of (dy,dx)</p>
+    indicating how much the green slide had to shift to align with blue, as was the case for "red shift". They are in the form of (dy,dx).</p>
 
     <table>
   <thead>
@@ -198,6 +199,51 @@
     </tr>  
   </tbody>
 </table>
+<h2>Extra Photos from the Prokudin-Gorskii Collection</h2>
+    <div class="img-row">
+      <figure>
+        <img src="output/out_bashkir.jpg" alt="complex_bashkir">
+        <figcaption>Colorized young Bashkir</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_zlatoust.jpg" alt="complex_zlatoust">
+        <figcaption>Colorized Zlatoust</figcaption>
+      </figure>
+      <figure>
+        <img src="output/out_railway_workers.jpg" alt="complex_railway_workers">
+        <figcaption>Colorized railway workers</figcaption>
+      </figure>
+    </div>
+    
+   <table>
+  <thead>
+    <tr>
+      <th>Image</th>
+      <th>Green Shift</th>
+      <th>Red Shift</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Bashkir</td>
+      <td>(4, -1)</td>
+      <td>(9, 4)</td>
+    </tr>
+    <tr>
+      <td>Zlatoust</td>
+      <td>(4, -1)</td>
+      <td>(14, -2)</td>
+    </tr>
+    <tr>
+      <td>Railway workers</td>
+      <td>(3, 0)</td>
+      <td>(2, 0)</td>
+    </tr>
+  </tbody>
+
+     <p>With the adjustments put into the model (Sobel filters for edges), along with the tuning of the parameters to find the optimal search space
+       without using too much compute, all images were able to align properly.
+     </p>
     
   </main>
 </body>
