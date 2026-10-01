@@ -87,11 +87,12 @@
     gradient magnitude can be calculated. Then, by limiting the magnitude by a lower bound (to remove noise), the edges can be isolated,
       creating an "edge map":</p>
 
-    <div class="img-row">
+
       <figure>
         <img src="media/cameraman_dxdy.png" alt="Cameraman dx">
         <figcaption>Cameraman Convolved with Dx and Dy</figcaption>
       </figure>
+    <div class="img-row">
       <figure>
         <img src="media/cameraman_gradmag.png" alt="Cameraman Gradmag">
         <figcaption>Cameraman Gradient Magnitude</figcaption>
@@ -109,7 +110,7 @@
 
     <div class="img-row">
       <figure>
-        <img src="media/gaussian_edges.png" alt="Cameraman gaussian edges">
+        <img src="media/cameraman_gaussian_edges.png" alt="Cameraman gaussian edges">
         <figcaption>Cameraman with the Blur Applied First</figcaption>
       </figure>
       <figure>
@@ -178,7 +179,7 @@
       they were tested on a picture of an apple:
     </p>
 
-    <div class="img-row">
+
       <figure>
         <img src="media/apple_gauss.png" alt="Apple Gauss">
         <figcaption>Apple Gaussian Stack</figcaption>
@@ -187,7 +188,6 @@
         <img src="media/apple_laplace.png" alt="Apple Laplace">
         <figcaption>Apple Laplacian Stack</figcaption>
       </figure>
-    </div>
 
     <p>
       A blend can then be created (an "oraple": orange + apple) by building the two Laplacian stacks then combining them with a Gaussian stack 
