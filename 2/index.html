@@ -16,12 +16,20 @@
     <h2>Part 1: Fun with Filters</h2>
     <div class="img-row">
       <figure>
-        <img src="media/me_close.jpeg" alt="Close-up me">
-        <figcaption>Close up selfie</figcaption>
+        <img src="media/me_far_gray.png" alt="Gray selfie">
+        <figcaption>Selfie</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far.jpeg" alt="Far me">
-        <figcaption>Zoomed in selfie</figcaption>
+        <img src="media/me_far_4.jpeg" alt="Far 4">
+        <figcaption>4 For Loop Convolutional Blur</figcaption>
+      </figure>
+      <figure>
+        <img src="media/me_far_2.jpeg" alt="Far 2">
+        <figcaption>2 For Loop Convolutional Blur</figcaption>
+      </figure>
+      <figure>
+        <img src="media/me_far_conv2.jpeg" alt="Far scipy_conv">
+        <figcaption>convolve2d Blur</figcaption>
       </figure>
     </div>
     <p>The code following implements convolution with 4 and 2 for loops, which are both then applied on a picture of myself alongside scipy.signal.convolve2d
@@ -60,8 +68,56 @@
                     result[i][j] = sum
             return result
     </code></pre>
+
+    <p>These images of my face can be convolved with the finite difference operators Dx and Dy, to get the following images. The edges appear 
+    weakly because of the high resolution of the images, but they still appear.</p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/me_dx.png" alt="Selfie dx">
+        <figcaption>Selfie Convolved with Dx</figcaption>
+      </figure>
+      <figure>
+        <img src="media/me_dy.png" alt="Selfie dy">
+        <figcaption>Selfie Convolved with Dy</figcaption>
+      </figure>
+    </div>
+
+    <p>These operations can also be done on the cameraman image. First by convolving the image with the finite difference operators, the 
+    gradient magnitude can be calculated. Then, by limiting the magnitude by a lower bound (to remove noise), the edges can be isolated,
+      creating an "edge map":</p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/cameraman_dxdy.png" alt="Cameraman dx">
+        <figcaption>Cameraman Convolved with Dx and Dy</figcaption>
+      </figure>
+      <figure>
+        <img src="media/cameraman_gradmag.png" alt="Cameraman Gradmag">
+        <figcaption>Cameraman Gradient Magnitude</figcaption>
+      </figure>
+      <figure>
+        <img src="media/cameraman_edges.png" alt="Cameraman edges">
+        <figcaption>Cameraman Edge Map</figcaption>
+      </figure>
+    </div>
+
+    <p> To get a more defined edge map and remove the noise created by the grass, the gray-scaled cameraman image can first be blurred before 
+      edges are isolated. This can be done by either blurring the image first then taking the derivatives, or taking the derivative of the 
+      Gaussian blur before applying it onto the image. Both of these approaches are done below, to depict identical results.
+    </p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/gaussian_edges.png" alt="Cameraman gaussian edges">
+        <figcaption>Cameraman with the BLur Applied First</figcaption>
+      </figure>
+      <figure>
+        <img src="media/cameraman_gaussderiv.png" alt="Cameraman gaussian derivative">
+        <figcaption>Cameraman with the Derivative of the Gaussian Applied</figcaption>
+      </figure>
+    </div>
     
-   
   </main>
 </body>
 </html>
