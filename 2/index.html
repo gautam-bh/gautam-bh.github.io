@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project 0 — CS 180 Becoming Friends with Your Camera</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <a class="home-btn" href="../index.html">Home</a>
+
+  <main class="content">
+    <h1>Project 2: Fun with Filters and Frequencies!</h1>
+    <p class="subtitle">Gautam Bhooma · CS 180 · Fall 2026</p>
+
+    <h2>Part 1: Fun with Filters</h2>
+    <div class="img-row">
+      <figure>
+        <img src="media/me_close.jpeg" alt="Close-up me">
+        <figcaption>Close up selfie</figcaption>
+      </figure>
+      <figure>
+        <img src="media/me_far.jpeg" alt="Far me">
+        <figcaption>Zoomed in selfie</figcaption>
+      </figure>
+    </div>
+    <p>The code following implements convolution with 4 and 2 for loops, which are both then applied on a picture of myself alongside scipy.signal.convolve2d
+      as shown above. The visual similarity between the last 3 pictures shows that all convolutions result in the same image.</p>
+    <pre><code class="language-python">
+      def convolution4(img, kernel, mode = "same"):
+        #kernel is 2d array
+        K = kernel[::-1, ::-1]
+        p = pad(img, kernel.shape, mode)
+        H, W = img.shape
+        kH, kW = kernel.shape
+        H -= kH - 1
+        W -= kW - 1
+        result = np.zeros((H, W))
+        for i in range(H):
+            for j in range(W):
+                sum = 0
+                for h in range(kH):
+                    for w in range(kW):
+                        sum += p[i + h, j + w] * K[h, w]
+                result[i][j] = sum
+        return result
+
+    def convolution(img, kernel, mode="same"):
+        #kernel is 2d array
+            K = kernel[::-1, ::-1]
+            p = pad(img, kernel.shape, mode)
+            H, W = p.shape
+            kH, kW = kernel.shape
+            H -= kH - 1
+            W -= kW - 1
+            result = np.zeros((H, W))
+            for i in range(H):
+                for j in range(W):
+                    sum = np.sum(p[i:i+kH, j:j+kW] * K)
+                    result[i][j] = sum
+            return result
+    </code></pre>
+    
+   
+  </main>
+</body>
+</html>
