@@ -13,22 +13,22 @@
     <h1>Project 2: Fun with Filters and Frequencies!</h1>
     <p class="subtitle">Gautam Bhooma · CS 180 · Fall 2026</p>
 
-    <h2>Part 1: Fun with Filters</h2>
+    <h2>Part 1: Fun with Filters!</h2>
     <div class="img-row">
       <figure>
         <img src="media/me_far_gray.png" alt="Gray selfie">
         <figcaption>Selfie</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far_4.jpeg" alt="Far 4">
+        <img src="media/me_far_4.png" alt="Far 4">
         <figcaption>4 For Loop Convolutional Blur</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far_2.jpeg" alt="Far 2">
+        <img src="media/me_far_2.png" alt="Far 2">
         <figcaption>2 For Loop Convolutional Blur</figcaption>
       </figure>
       <figure>
-        <img src="media/me_far_conv2.jpeg" alt="Far scipy_conv">
+        <img src="media/me_far_conv2.png" alt="Far scipy_conv">
         <figcaption>convolve2d Blur</figcaption>
       </figure>
     </div>
@@ -110,13 +110,99 @@
     <div class="img-row">
       <figure>
         <img src="media/gaussian_edges.png" alt="Cameraman gaussian edges">
-        <figcaption>Cameraman with the BLur Applied First</figcaption>
+        <figcaption>Cameraman with the Blur Applied First</figcaption>
       </figure>
       <figure>
         <img src="media/cameraman_gaussderiv.png" alt="Cameraman gaussian derivative">
         <figcaption>Cameraman with the Derivative of the Gaussian Applied</figcaption>
       </figure>
     </div>
+
+    <h2>Part 1: Fun with Frequencies!</h2>
+    <p>
+      In contrast with the Gaussian blur, which largely preserves low frequency features, high frequency features can be extracted from an image
+      by simply subtracting the Gaussian blur from the original image. Adding these features back to the image with some weightage allows for 
+      a "sharpened" image. Below is a picture of the Taj Mahal, along with a sharpened version of said image.
+    </p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/taj.jpg" alt="Taj Mahal">
+        <figcaption>Taj Mahal Original Picture</figcaption>
+      </figure>
+      <figure>
+        <img src="media/taj_sharpen.png" alt="Sharpened Taj">
+        <figcaption>Sharpened Taj Mahal Picture</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      To ensure that this sharpening works, I took the picture of the Gateway building that I had from Project 0, blurred it, and consequently 
+      sharpened it. Not all features survived the re-sharpening, like letters, but the general geometric structure of the building was recreated 
+      by the sharpening.
+    </p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/gateway_far.jpeg" alt="Gateway">
+        <figcaption>Gateway Building Original Picture</figcaption>
+      </figure>
+      <figure>
+        <img src="media/gateway_blur.png" alt="Blurred Gateway">
+        <figcaption>Blurred Gateway Picture</figcaption>
+      </figure>
+      <figure>
+        <img src="media/gateway_sharpen.png" alt="Sharpened Gateway">
+        <figcaption>Sharpened Gateway Picture</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      Hybrid images can be made by combinging the low-frequency features of one image with the high-frequency ones of another. Therefore, it will appear
+      to be one image close up, and another one far away where low frequency features dominate. To have a properly accurate hybrid image, important features need to be roughly aligned. 
+      I decided to try to make a hybrid of two pictures of a tiger and a lion, both of which are staring into the camera. I aligned them with the 
+      provided code, using their eyes as reference points, then extracted the high frequency features of the tiger and the low frequency features
+      of the lion, which I then combined. The image was colorized because the lion lacked a lot of the distinct features that the tiger had (ex. 
+      the stripes), so would not appear unless color was added.
+    </p>
+    <div class="img-row">
+      <figure>
+        <img src="media/cat_blend.png" alt="Hybrid">
+        <figcaption>Lion Tiger Hybrid Image</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      Another way to blend two images uses multi-resolution blending, which involves first implementing the Gaussian and Laplacian stacks. Unlike 
+      pyramids, stacks do not decrease the size of the image, but maintain its size whilst doing repetitive blurs. to ensure that the stacks worked, 
+      they were tested on a picture of an apple:
+    </p>
+
+    <div class="img-row">
+      <figure>
+        <img src="media/apple_gauss.png" alt="Apple Gauss">
+        <figcaption>Apple Gaussian Stack</figcaption>
+      </figure>
+      <figure>
+        <img src="media/apple_laplace.png" alt="Apple Laplace">
+        <figcaption>Apple Laplacian Stack</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      A blend can then be created (an "oraple": orange + apple) by building the two Laplacian stacks then combining them with a Gaussian stack 
+      of a mask (indicating where the line will be). I also did this by combining my pictures of the tiger and the lion. This one didn't turn 
+      out nearly as well, but largely did look like a blend, especially if not looked at too closely.
+    </p>
+
+    <figure>
+        <img src="media/oraple.png" alt="Oraple">
+        <figcaption>Oraple Blend</figcaption>
+      </figure>
+      <figure>
+        <img src="media/tion.png" alt="Tion">
+        <figcaption>Tiger Lion Blend</figcaption>
+      </figure>
     
   </main>
 </body>
