@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project 3A — Exploring the Power of Flow Models</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <a class="home-btn" href="../index.html">Home</a>
+
+  <main class="content">
+    <h1>Project 3A: Exploring the Power of Flow Models</h1>
+    <p class="subtitle">Gautam Bhooma · CS 180 · Fall 2026</p>
+
+    <p>In this project I used a pretrained text-to-image flow model, PixNerd-XXL-P16-T2I, which generates
+      512×512 images directly in pixel space. I didn't train anything. Instead, I wrote the sampling loops around
+      the model's velocity prediction <i>v</i><sub>θ</sub>(<i>x</i><sub>t</sub>, <i>t</i>, <i>c</i>). The model uses
+      the linear flow-matching convention: <i>x</i><sub>t</sub> = (1 − <i>t</i>)ε + <i>t</i>·<i>x</i><sub>1</sub>,
+      so <i>t</i> = 0 is pure Gaussian noise and <i>t</i> = 1 is a clean image. The model is trained to predict the
+      velocity <i>x</i><sub>1</sub> − ε that points from the noise to the image. Unless stated otherwise, I used
+      seed 180, Euler step size <i>h</i> = 0.02, and CFG scale <i>w</i> = 7.</p>
+
+    <!-- ===================== INPUTS ===================== -->
+    <h2>My Input Images</h2>
+    <p>The Campanile was provided with the project. Everything else is mine: two of my own photos, a Mondrian-style
+      image from the web, and two drawings I made.</p>
+    <div class="img-row">
+      <figure><img src="media/beluga.jpg" alt="beluga"><figcaption>My photo 1: a beluga whale (used in Part 1 and as my image 2 in Part 3)</figcaption></figure>
+      <figure><img src="media/pinnacles.jpg" alt="pinnacles"><figcaption>My photo 2: Pinnacles (my image 1 in Part 3)</figcaption></figure>
+      <figure><img src="media/campanile.jpg" alt="campanile"><figcaption>The Campanile (provided)</figcaption></figure>
+    </div>
+    <div class="img-row">
+      <figure><img src="media/mondrian.jpg" alt="mondrian"><figcaption>Web image: Mondrian-style painting</figcaption></figure>
+      <figure><img src="media/mountain.jpeg" alt="mountain drawing"><figcaption>Drawing 1: a mountain and river</figcaption></figure>
+      <figure><img src="media/skyline.jpeg" alt="skyline drawing"><figcaption>Drawing 2: a city skyline on a beach</figcaption></figure>
+    </div>
+
+    <!-- ===================== SECTION 1 ===================== -->
+    <h2>1.1 Constructing Noisy Training Inputs</h2>
+    <figure>
+      <img src="generated_outputs/02_noisy_inputs_t025_t050_t075.png" alt="training inputs">
+      <figcaption>My beluga image and the same noise sample mixed in at t = 0.25, 0.50, 0.75</figcaption>
+    </figure>
+    <p>I implemented <code>interpolate</code> as <code>(1 - t) * noise + t * image</code>. I sampled one noise tensor
+      and reused it at all three times, so the only thing that changes between panels is how much signal versus noise
+      is mixed in. At t = 0.25 the beluga is barely visible through the noise, and at t = 0.75 it's easy to
+      recognize.</p>
+
+    <h2>1.2 Classical Denoising (Gaussian Blur)</h2>
+    <figure><img src="generated_outputs/03_gaussian_blur_t025.png" alt="blur 0.25"><figcaption>t = 0.25: noisy input vs. best Gaussian blur</figcaption></figure>
+    <figure><img src="generated_outputs/03_gaussian_blur_t050.png" alt="blur 0.5"><figcaption>t = 0.50: noisy input vs. best Gaussian blur</figcaption></figure>
+    <figure><img src="generated_outputs/03_gaussian_blur_t075.png" alt="blur 0.75"><figcaption>t = 0.75: noisy input vs. best Gaussian blur</figcaption></figure>
+    <p>First I divided by <i>t</i> to restore the clean image's amplitude, since <i>x</i><sub>t</sub>/<i>t</i> =
+      <i>x</i><sub>1</sub> + ((1 − <i>t</i>)/<i>t</i>)ε. Then I blurred with σ ∈ {1, 2, 4, 8, 16} and kept the σ with
+      the lowest MSE against the clean image. Blurring removes the high-frequency noise, but it also removes all of
+      the image's fine detail, so the result is a smeared version of the image. At t = 0.25 there's so much noise that
+      even the best blur leaves colored blotches everywhere.</p>
+
+    <h2>1.3 One-Step Denoising</h2>
+    <figure><img src="generated_outputs/04_one_step_denoise_t025.png" alt="one step 0.25"><figcaption>t = 0.25: original, noisy, one-step estimate</figcaption></figure>
+    <figure><img src="generated_outputs/04_one_step_denoise_t050.png" alt="one step 0.5"><figcaption>t = 0.50: original, noisy, one-step estimate</figcaption></figure>
+    <figure><img src="generated_outputs/04_one_step_denoise_t075.png" alt="one step 0.75"><figcaption>t = 0.75: original, noisy, one-step estimate</figcaption></figure>
+    <p>Here I used a single model call to jump straight to <i>t</i> = 1:
+      <i>x̂</i><sub>1</sub> = <i>x</i><sub>t</sub> + (1 − <i>t</i>)·<i>v</i><sub>θ</sub>(<i>x</i><sub>t</sub>, <i>t</i>, <i>c</i>),
+      with the prompt "a high quality photo". The model predicts the <em>average</em> clean image given the noisy
+      input. At t = 0.25 it gets the beluga's overall shape, pose and colors right, which is impressive considering
+      how little of the beluga is visible, but the result is soft. The eye, the fine ripples on the water surface and
+      the details in the background are gone. By t = 0.75 the estimate is almost indistinguishable from the
+      original.</p>
+
+    <h2>1.4 Visualizing Velocity</h2>
+    <figure><img src="generated_outputs/05_velocity_original.png" alt="velocity original" style="max-width:320px; margin:0 auto"><figcaption>Original image</figcaption></figure>
+    <figure><img src="generated_outputs/05_velocity_diagnostics_t025.png" alt="velocity 0.25"><figcaption>t = 0.25</figcaption></figure>
+    <figure><img src="generated_outputs/05_velocity_diagnostics_t050.png" alt="velocity 0.50"><figcaption>t = 0.50</figcaption></figure>
+    <figure><img src="generated_outputs/05_velocity_diagnostics_t075.png" alt="velocity 0.75"><figcaption>t = 0.75</figcaption></figure>
+    <p>Each row shows the noisy input, the predicted update (1 − <i>t</i>)<i>v̂</i>, the ground-truth update
+      <i>x</i><sub>1</sub> − <i>x</i><sub>t</sub>, and the per-pixel error
+      <i>E</i><sub>t</sub> = √mean<sub>RGB</sub>[((1 − <i>t</i>)(<i>v̂</i> − <i>v</i><sub>gt</sub>))²].
+      The updates use one shared symmetric color scale, where middle gray means zero. The error maps also share one
+      vmin/vmax across all three times. At t = 0.25 the error is concentrated on high-frequency structure: the
+      ripples on the water surface, the outline of the beluga and its fin, and the objects in the bottom-left. The
+      flat blue water is close to zero error, because a smooth region is easy to predict even from heavy noise. As
+      <i>t</i> increases, the update the model needs to make gets smaller and there's more of the real image to work
+      from, so by t = 0.75 the error map is almost entirely dark, with only faint edges left.</p>
+
+    <h2>1.5 Iterative Denoising with Euler Sampling</h2>
+    <figure><img src="generated_outputs/06_euler_trajectory.png" alt="trajectory"><figcaption>Starting at t = 0.50, shown every 5th Euler step (h = 0.02, 25 updates)</figcaption></figure>
+    <figure><img src="generated_outputs/06_denoise_comparison_blur_onestep_euler.png" alt="comparison"><figcaption>Original vs. Gaussian blur vs. one-step vs. iterative Euler, all from t = 0.50</figcaption></figure>
+    <p><code>euler_sample</code> repeats <i>x</i> ← <i>x</i> + <i>h</i>·<i>v</i>(<i>x</i>, <i>t</i>) and
+      recomputes the velocity at every step. If the last step would overshoot, it is shortened so that the sampler
+      ends exactly at <i>t</i> = 1. I checked this against a constant velocity field: 50 steps from 0, 25 steps from
+      0.5, and 4 steps from 0.93 with a shortened last step. In each case the result exactly matched the analytic
+      answer 1 − <i>t</i><sub>start</sub>.</p>
+    <p>In the comparison, the Gaussian blur is still grainy and loses the beluga's edges. The one-step estimate has
+      the right shape but looks airbrushed. The Euler result is the sharpest: it brings back the water-surface
+      ripples and the texture in the background, because each step only has to make a small correction and gets to
+      re-look at the image. It isn't an exact copy of the original, though. Some of that detail is invented by the
+      model rather than recovered.</p>
+
+    <h2>1.6 Generating Images from Noise</h2>
+    <figure><img src="generated_outputs/07_conditional_samples.png" alt="samples"><figcaption>Five samples from pure noise, "a high quality photo", seeds 180–184</figcaption></figure>
+    <p>All five samples are studio-style portraits of a single person against a plain background. Nothing in the
+      prompt asks for a person, so this shows a strong subject bias: "a high quality photo" seems to mean "a
+      portrait" to this model, probably because so many of the high-quality photos it was trained on are portraits.
+      Without guidance, the quality is also inconsistent. Seed 184 and seed 182 look like real photos, but seed 180
+      has no face and seed 183's face is melted.</p>
+
+    <!-- ===================== SECTION 2 ===================== -->
+    <h2>2.1 Classifier-Free Guidance</h2>
+    <figure><img src="generated_outputs/08_cfg_samples.png" alt="cfg samples"><figcaption>Five CFG samples (w = 7), same seeds as 1.6</figcaption></figure>
+    <p>CFG runs the model twice at the same <i>x</i><sub>t</sub> and <i>t</i>: once with the prompt
+      (<i>v</i><sub>c</sub>) and once with the empty prompt (<i>v</i><sub>u</sub>). It then pushes the velocity
+      further in the prompt's direction: <i>v</i><sub>cfg</sub> = <i>v</i><sub>c</sub> + <i>w</i>(<i>v</i><sub>c</sub> − <i>v</i><sub>u</sub>).
+      With <i>w</i> = 0 this reduces exactly to the conditional prediction, and I checked that in the notebook.</p>
+    <p>Compared with 1.6, every CFG sample is a clean, coherent face: no missing or melted features, sharper detail
+      and stronger contrast. The trade-off is variety. The CFG samples all look alike: centered, front-facing
+      headshots with a slight smile and a plain dark or light background. The subject bias is still there, and
+      guidance actually makes it stronger.</p>
+
+    <!-- ===================== SECTION 3 ===================== -->
+    <h2>3.1 Image-to-Image Editing</h2>
+    <p>This is SDEdit. I noise the image to a starting time <i>t</i><sub>start</sub> with
+      (1 − <i>t</i><sub>start</sub>)ε + <i>t</i><sub>start</sub><i>x</i><sub>1</sub>, then integrate to
+      <i>t</i> = 1 with CFG and the prompt "a high quality photo". A small <i>t</i><sub>start</sub> means almost pure
+      noise, so the model is free to invent a new image. A larger <i>t</i><sub>start</sub> keeps more of the original.
+      Starting times: 0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50.</p>
+    <figure><img src="generated_outputs/09_edit_campanile.png" alt="edit campanile"><figcaption>Campanile</figcaption></figure>
+    <figure><img src="generated_outputs/09_edit_pinnacles.png" alt="edit pinnacles"><figcaption>My image 1: Pinnacles (it loaded sideways because of the photo's orientation metadata)</figcaption></figure>
+    <figure><img src="generated_outputs/09_edit_beluga.png" alt="edit beluga"><figcaption>My image 2: beluga</figcaption></figure>
+    <p>The Pinnacles edits show the progression clearly. At t ≤ 0.06 the model ignores the photo and makes objects
+      on plain backgrounds (a phone with a face on it, a gray appliance). By t = 0.10–0.14 it keeps the pale blue
+      color scheme but turns it into a shirt. At t = 0.25 the tree, cliff and sky are back in roughly the right
+      places, and t = 0.50 is close to the original.</p>
+
+    <h3>Web Image and Hand-Drawn Images</h3>
+    <figure><img src="generated_outputs/10_edit_web_mondrian.png" alt="edit web image"><figcaption>Web image: Mondrian-style painting</figcaption></figure>
+    <figure><img src="generated_outputs/10_edit_drawing_mountain.png" alt="edit drawing 1"><figcaption>Drawing 1: mountain and river</figcaption></figure>
+    <figure><img src="generated_outputs/10_edit_drawing_skyline.png" alt="edit drawing 2"><figcaption>Drawing 2: city skyline</figcaption></figure>
+    <p>The Mondrian is preserved from t = 0.04 onward. Its large, flat blocks of color are such strong
+      low-frequency structure that very little signal is needed to lock them in. The drawings are more fun. At
+      mid-range starting times the model tries to make them "photos": the mountain turns into a white vase-like
+      shape with a real river and grass, and the skyline's buildings become blurry real towers. At low and middle
+      times it also invents garbled text and logos on the skyline, as if it thinks it's looking at an ad or a book
+      cover. At t = 0.25–0.50 both drawings stay drawings.</p>
+
+    <h2>3.2 Text-Guided Image Editing</h2>
+    <p>This uses the same procedure as 3.1, but with my own prompt instead of "a high quality photo".</p>
+    <figure><img src="generated_outputs/11_text_edit_campanile_baobab.png" alt="text edit campanile"><figcaption>Campanile: "A tall baobab tree"</figcaption></figure>
+    <figure><img src="generated_outputs/11_text_edit_pinnacles_airplane.png" alt="text edit pinnacles"><figcaption>Pinnacles: "An airplane in the sky"</figcaption></figure>
+    <figure><img src="generated_outputs/11_text_edit_beluga_wild_west.png" alt="text edit beluga"><figcaption>Beluga: "Add in a wild west scene"</figcaption></figure>
+    <p>The baobab is my favorite. Because the Campanile is a tall, pale vertical shape against a blue sky, the
+      model turns the tower into the baobab's trunk and keeps the sky and the trees at the bottom from t = 0.02 to
+      0.10. At t = 0.14 the result is half tower, half tree: a smooth trunk with the Campanile's windows on top. For
+      the beluga, the low starting times produce a full cowboy scene, but it keeps getting bluer as
+      <i>t</i><sub>start</sub> increases because it inherits the underwater color palette. At t = 0.14 the beluga
+      itself is floating over a desert. For Pinnacles, the airplane appears at every starting time up to 0.25, where
+      it's flying in front of the cliff.</p>
+
+    <h2>3.3 Visual Anagrams</h2>
+    <p>At each Euler step I average two CFG velocities. One is for prompt A on the upright image. The other is for
+      prompt B on the image rotated 180°, rotated back afterward: <i>v</i> = ½[<i>v</i><sub>cfg</sub>(<i>x</i>, <i>t</i>, <i>p</i><sub>1</sub>)
+      + flip(<i>v</i><sub>cfg</sub>(flip(<i>x</i>), <i>t</i>, <i>p</i><sub>2</sub>))]. The final image has to satisfy
+      both prompts, one right side up and one upside down.</p>
+    <figure><img src="generated_outputs/12_anagram_old_man_campfire.png" alt="anagram 0"><figcaption>Upright: "an oil painting of an old man" · Flipped: "an oil painting of people around a campfire"</figcaption></figure>
+    <figure><img src="generated_outputs/12_anagram_village_horse.png" alt="anagram 1"><figcaption>Upright: "a lithograph of a snowy mountain village" · Flipped: "a lithograph of a horse"</figcaption></figure>
+    <p>The old man / campfire pair works well. The fire becomes the glow on the old man's forehead, and the
+      people around the fire make up his face. The village / horse pair is weaker: both views read correctly, but a
+      ghostly upside-down horse head is clearly visible in the bottom of the village view.</p>
+
+    <h2>3.4 Hybrid Images</h2>
+    <p>This is Factorized Diffusion. At each step I combine the low frequencies of prompt A's velocity with the high
+      frequencies of prompt B's: <i>v</i> = lowpass(<i>v</i><sub>1</sub>) + <i>v</i><sub>2</sub> − lowpass(<i>v</i><sub>2</sub>).
+      The low-pass filter is a Gaussian blur with kernel size 265 and σ = 16. Up close you see prompt B; from far
+      away (or shrunk down) you see prompt A. This is the same idea as the hybrid images in Project 2, except that
+      here the model generates the image instead of me blending two photos. Below, each hybrid is shown full size
+      (close) and shrunk to 64×64 (distant).</p>
+    <div class="img-row" style="align-items:center">
+      <figure><img src="generated_outputs/13_hybrid_skull_waterfall_close.png" alt="hybrid skull waterfall close"><figcaption>Close: "a lithograph of a waterfall"</figcaption></figure>
+      <figure style="flex:0 0 auto; min-width:0"><img src="generated_outputs/13_hybrid_skull_waterfall_distant_64px.png" alt="hybrid skull waterfall distant" style="width:64px"><figcaption>Distant: "a lithograph of a skull"</figcaption></figure>
+    </div>
+    <div class="img-row" style="align-items:center">
+      <figure><img src="generated_outputs/13_hybrid_cat_forest_close.png" alt="hybrid cat forest close"><figcaption>Close: "a lithograph of a forest"</figcaption></figure>
+      <figure style="flex:0 0 auto; min-width:0"><img src="generated_outputs/13_hybrid_cat_forest_distant_64px.png" alt="hybrid cat forest distant" style="width:64px"><figcaption>Distant: "a lithograph of a cat"</figcaption></figure>
+    </div>
+  </main>
+</body>
+</html>
