@@ -246,9 +246,8 @@
       input, bottom: output</figcaption></figure>
     <figure><img src="3b/generated_outputs/pure_noise_epoch5.png" alt="pure noise epoch 5"><figcaption>After epoch 5, with the same noise
       inputs</figcaption></figure>
-    <p style="border-left:4px solid #e0a800; padding:8px 12px; background:rgba(224,168,0,0.12)"><b>TODO (write this yourself):</b> What patterns do you see in the outputs? How do they relate to the
-      training digits, and why does this happen? (Hint from the spec: think about what minimizes MSE across all
-      training targets.)</p>
+    <p>These images are blurry averages of all digits (capturing common features, like the curves) because the model is trained on the averaged 
+    MSE Loss across all digits and is not conditioned. This is why they all look pretty much identical aswell.</p>
 
     <!-- ===================== PART B · 2 ===================== -->
     <h2>2.1 Adding Time Conditioning to the UNet</h2>
@@ -324,9 +323,8 @@
       epoch 5</figcaption></figure>
     <figure><img src="3b/generated_outputs/class_no_scheduler_epoch10.png" alt="no scheduler epoch 10"><figcaption>No scheduler, after
       epoch 10</figcaption></figure>
-    <p style="border-left:4px solid #e0a800; padding:8px 12px; background:rgba(224,168,0,0.12)"><b>TODO (write this yourself):</b> Compare these results with the scheduled model above. What did
-      lowering the learning rate do, and what's the tradeoff? (Look at how epoch 1 here compares with epoch 1 of
-      the scheduled run, and at the final epoch-10 quality.)</p>
+    <p>Decreasing the learning rate makes the numbers more defined and sharp, instead of being as bulky as they were before. In addition,
+    the model converged to "number-looking" shapes far faster (by epoch 5 effectively). </p>
   </main>
 </body>
 </html>
