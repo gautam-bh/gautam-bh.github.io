@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project 4 — Image Warping and Mosaicing</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <a class="home-btn" href="../index.html">Home</a>
+
+  <main class="content">
+    <h1>Project 4: Image Warping and Mosaicing</h1>
+    <p class="subtitle">Gautam Bhooma · CS 180 · Fall 2026</p>
+    <p><a href="#part-a">Part A: Image Warping and Mosaicing</a></p>
+
+    <h1 id="part-a">Part A: Image Warping and Mosaicing</h1>
+
+    <!-- ===================== SECTION 1 ===================== -->
+    <h2>A.1: Shoot the Pictures</h2>
+    <p>I shot three sets of photos, one for each of the three mosaics in A.4. For each set I kept the center of
+      projection fixed and only rotated the camera between shots, so the images in a set are related by a
+      projective transformation (a homography). I took each set's photos back to back so nothing in the scene
+      moved and the lighting stayed the same. The fields of view overlap a lot, which gives plenty of shared
+      points to click as correspondences when I recover the homographies in A.2.</p>
+
+    <h3>Set 1: Conference Room</h3>
+    <div class="img-row">
+      <figure><img src="4a/media/IMG_4479.jpg" alt="conference room, straight on"><figcaption>Image 1: looking straight down the table</figcaption></figure>
+      <figure><img src="4a/media/IMG_4480.jpg" alt="conference room, rotated"><figcaption>Image 2: the camera rotated left and tilted</figcaption></figure>
+    </div>
+
+    <h3>Set 2: Hallway</h3>
+    <div class="img-row">
+      <figure><img src="4a/media/IMG_4484.jpg" alt="hallway, straight on"><figcaption>Image 1: looking straight down the hallway</figcaption></figure>
+      <figure><img src="4a/media/IMG_4485.jpg" alt="hallway, rotated"><figcaption>Image 2: the camera rolled and tilted</figcaption></figure>
+    </div>
+
+    <h3>Set 3: Looking Down from a Balcony</h3>
+    <div class="img-row">
+      <figure><img src="4a/media/IMG_4486.jpg" alt="balcony view, straight down"><figcaption>Image 1: looking down over the ledge</figcaption></figure>
+      <figure><img src="4a/media/IMG_4487.jpg" alt="balcony view, rotated"><figcaption>Image 2: the camera rotated left</figcaption></figure>
+    </div>
+  </main>
+</body>
+</html>
