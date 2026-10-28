@@ -16,11 +16,10 @@
 
     <h1 id="part-a">Part A: Image Warping and Mosaicing</h1>
 
-    <!-- ===================== SECTION 1 ===================== -->
     <h2>A.1: Shoot the Pictures</h2>
     <p>I shot three sets of photos, one for each of the three mosaics in A.4. For each set I kept the center of
-      projection fixed and only rotated the camera between shots, so the images in a set are related by a
-      projective transformation (a homography). I took each set's photos back to back so nothing in the scene
+      projection fixed and only rotated the camera between shots, so the images in a set are related by a homography.
+      I took each set's photos back to back so nothing in the scene
       moved and the lighting stayed the same. The fields of view overlap a lot, which gives plenty of shared
       points to click as correspondences when I recover the homographies in A.2.</p>
 
@@ -42,9 +41,8 @@
       <figure><img src="4a/media/IMG_4487.jpg" alt="balcony view, rotated"><figcaption>Image 2: the camera rotated left</figcaption></figure>
     </div>
 
-    <!-- ===================== SECTION 2 ===================== -->
     <h2>A.2: Recover Homographies</h2>
-    <p>A homography H is a 3×3 matrix that maps a point (x, y) in image 1 to its matching point (x', y') in
+    <p>A homography H is a matrix that maps a point (x, y) in image 1 to its matching point (x', y') in
       image 2:</p>
     <pre style="overflow-x:auto">x' = (a·x + b·y + c) / (g·x + h·y + 1)
 y' = (d·x + e·y + f) / (g·x + h·y + 1)
@@ -58,8 +56,8 @@ H = [ a  b  c ]
 [ 0  0  0  x  y  1  -x·y'  -y·y' ]                          [ y' ]</pre>
     <p>Four point pairs give exactly 8 equations, but clicks are never perfect, so I clicked about 10 pairs per set.
       Stacking them gives a 2n × 8 system A·h = b with more equations than unknowns, which I solved with least
-      squares (<code>np.linalg.lstsq</code>). This finds the H that best fits all the clicks at once. I wrote this
-      in <code>computeH(im1_pts, im2_pts)</code> without any built-in homography functions.</p>
+      squares. This finds the H that best fits all the clicks at once. I wrote this
+      in computeH(im1_pts, im2_pts) without any built-in homography functions.</p>
     <p>To check each H, I mapped my image 1 points through it and measured how far they landed from the points I
       clicked in image 2 (the reprojection error).</p>
 
@@ -68,14 +66,14 @@ H = [ a  b  c ]
     <pre style="overflow-x:auto">H = [  1.094      -0.5126     450.9  ]
     [  0.5329      1.080     -371.4  ]
     [  7.25e-05   -4.45e-05     1    ]</pre>
-    <p>Mean error 8.8 px, max 20.0 px.</p>
+
 
     <h3>Set 2: Hallway</h3>
     <figure><img src="4a/generated_outputs/a2_correspondences_set2_hallway.png" alt="hallway correspondences"><figcaption>10 correspondences: the doorway frame corners and features further down the hall</figcaption></figure>
     <pre style="overflow-x:auto">H = [  0.3809     -0.8410     875.7  ]
     [  0.7023      0.2787     -37.77 ]
     [ -3.15e-05   -2.24e-04     1    ]</pre>
-    <p>Mean error 18.5 px, max 51.3 px. The large rotation between these two shots shows up in the top-left 2×2
+    <p>The large rotation between these two shots shows up in the top-left 2×2
       block, which is close to a rotation by about 60°.</p>
 
     <h3>Set 3: Balcony</h3>
@@ -83,13 +81,11 @@ H = [ a  b  c ]
     <pre style="overflow-x:auto">H = [  0.8538     -0.6330     879.3  ]
     [  0.7659      1.034     -505.8  ]
     [  1.24e-05    2.36e-04     1    ]</pre>
-    <p>Mean error 6.1 px, max 10.8 px. I originally clicked 10 points here, and the mosaic came out as a long,
+    <p>I originally clicked 10 points here, and the mosaic came out as a long,
       stretched sliver. One point was a mismatch: the building face is a repeating grid of windows, and I had
-      clicked a similar-looking window corner that isn't actually in image 2. Most of my points were also in a thin
-      band along the building, so there wasn't enough spread to outvote the bad one. Removing it fixed the
+      clicked a similar-looking window corner that isn't actually in image 2. Removing it fixed the
       homography.</p>
 
-    <!-- ===================== SECTION 3 ===================== -->
     <h2>A.3: Warp the Images</h2>
     <p>I wrote two warping functions, <code>warpImageNearestNeighbor(im, H)</code> and
       <code>warpImageBilinear(im, H)</code>, using inverse warping:</p>
@@ -100,10 +96,8 @@ H = [ a  b  c ]
       <li>Sample the original image at that spot. That spot is usually between pixels, which is where the two
         methods differ:
         <ul style="margin-left: 1.5rem">
-          <li><b>Nearest neighbor:</b> round to the closest pixel and copy it.</li>
-          <li><b>Bilinear:</b> blend the 4 surrounding pixels, weighted by how close each one is. If the spot is
-            a fraction dx across and dy down from the top-left pixel p00, then
-            value = (1−dx)(1−dy)·p00 + dx(1−dy)·p10 + (1−dx)dy·p01 + dx·dy·p11.</li>
+          <li>Nearest neighbor: round to the closest pixel and copy it.</li>
+          <li>Bilinear: blend the 4 surrounding pixels, weighted by how close each one is.</li>
         </ul>
       </li>
       <li>Output pixels whose source falls outside the original image are marked empty in an alpha mask, so they
@@ -129,18 +123,17 @@ H = [ a  b  c ]
 
     <h3>Nearest Neighbor vs. Bilinear</h3>
     <p>At full size the two results look the same. Zoomed in, nearest neighbor gives straight edges a jagged,
-      stair-stepped outline, because each output pixel snaps to one whole source pixel. Bilinear keeps the same
+      stair-stepped outline, because each output pixel goes to one whole source pixel. Bilinear keeps the same
       edges smooth, but it's slightly softer overall since every pixel is an average of four.</p>
     <p>Nearest neighbor is faster because it does one lookup per pixel instead of four plus the blending math. On
       the TV it took 0.05 s vs. 0.16 s for bilinear, and on the doorway 0.11 s vs. 0.22 s. Bilinear looks
-      noticeably better for only a fraction of a second more, so I used it for the mosaics.</p>
+      noticeably better for  a fraction of a second more, so I used it for the mosaics.</p>
 
-    <!-- ===================== SECTION 4 ===================== -->
     <h2>A.4: Blend the Images into a Mosaic</h2>
     <p>For each set, image 1 is the reference and stays as it is. Since H maps image 1 to image 2, I warped image 2
       into image 1's view with H⁻¹. Both images go onto one shared canvas, big enough to hold both warped bounding
       boxes, so matching pixels land in the same place.</p>
-    <p>Just pasting one image over the other leaves a hard seam, so I blended them:</p>
+    <p>Just pasting one image over the other gives a hard seam, so I blended them:</p>
     <ul style="margin: 0 0 1.1rem 1.5rem">
       <li><b>Weights:</b> every pixel gets a weight equal to its distance to the nearest edge of its own image, scaled
         so the center is 1 and the edges are near 0. The weight map is warped along with the image. Where the two
@@ -163,22 +156,16 @@ H = [ a  b  c ]
     <figure><img src="4a/generated_outputs/a4_mosaic_set2_hallway.jpg" alt="hallway mosaic"><figcaption>Hallway mosaic</figcaption></figure>
     <p>Image 2 was rolled about 60°, so once it's warped back it fills in the ceiling above image 1 and the walls on
       both sides. Most of the hallway lines up, but there is some ghosting near the fire extinguisher sign and the
-      door on the right. This set had the highest click error (18.5 px).</p>
+      door on the right.</p>
 
     <h3>Mosaic 3: Balcony</h3>
     <figure><img src="4a/generated_outputs/a4_mosaic_set3_balcony_comparison.png" alt="balcony mosaic with sources"><figcaption>Source images and the mosaic</figcaption></figure>
     <figure><img src="4a/generated_outputs/a4_mosaic_set3_balcony.jpg" alt="balcony mosaic"><figcaption>Balcony mosaic</figcaption></figure>
-    <p>The building face, the patio, and the far wall line up. The ledge right in front of the camera doesn't
-      quite: it's so close that even a small shift of my hand between shots moved it noticeably relative to the
-      background (parallax). A homography can only line up a scene seen from a single point, so no H can fix both
+    <p>The building face, the patio, and the far wall line up. The ledge right in front of the camera doesn't:
+      it's so close that even a small shift of my hand between shots moved it noticeably relative to the
+      background. A homography can only line up a scene seen from a single point, so no H can fix both
       the ledge and the faraway patio at once.</p>
 
-    <h3>What I Learned</h3>
-    <p>How good the mosaic looks depends mostly on the correspondences. A single mismatched point was enough to
-      wreck the balcony homography, and points bunched in one area left H poorly pinned down, so spreading clicks
-      across the whole overlap mattered as much as clicking them precisely. Also, rotating the camera in place is
-      what makes a single homography valid; anything close to the lens shows parallax that no homography can
-      remove.</p>
   </main>
 </body>
 </html>
