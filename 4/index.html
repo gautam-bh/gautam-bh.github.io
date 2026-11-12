@@ -13,6 +13,7 @@
     <h1>Project 4: Image Warping and Mosaicing</h1>
     <p class="subtitle">Gautam Bhooma · CS 180 · Fall 2026</p>
     <p><a href="#part-a">Part A: Image Warping and Mosaicing</a></p>
+    <p><a href="#part-b">Part B: Feature Matching for Autostitching</a></p>
 
     <h1 id="part-a">Part A: Image Warping and Mosaicing</h1>
 
@@ -165,6 +166,105 @@ H = [ a  b  c ]
       it's so close that even a small shift of my hand between shots moved it noticeably relative to the
       background. A homography can only line up a scene seen from a single point, so no H can fix both
       the ledge and the faraway patio at once.</p>
+
+    <h1 id="part-b">Part B: Feature Matching for Autostitching</h1>
+    <p>In Part A I clicked the correspondences by hand. In Part B the program finds them on its own, following the
+      MOPS paper (Brown, Szeliski and Winder): find corners, describe each one with a small patch, match the patches
+      between the two images, and use RANSAC to throw out the bad matches. I used the same three sets of photos as
+      Part A.</p>
+
+    <h2>B.1: Harris Corner Detection</h2>
+    <p>I used the provided harris.py to score every pixel with the Harris corner strength,
+      det(H) / tr(H), and keep every pixel that is a maximum in its 3×3 neighborhood. There's no strength threshold,
+      so it returns about 55,000 corners per image. Most of them are tiny bumps from noise on flat walls.</p>
+    <figure><img src="4b/generated_outputs/b1_harris_set1_room.png" alt="harris corners room"><figcaption>All Harris corners on the conference room</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b1_harris_set2_hallway.png" alt="harris corners hallway"><figcaption>All Harris corners on the hallway</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b1_harris_set3_balcony.png" alt="harris corners balcony"><figcaption>All Harris corners on the balcony</figcaption></figure>
+
+    <h3>Adaptive Non-Maximal Suppression (ANMS)</h3>
+    <p>Keeping only the 500 strongest corners isn't enough, because they clump together in a few high-contrast
+      spots like the ceiling lights. ANMS gives each corner a radius equal to the distance to the nearest corner that
+      is clearly stronger than it:</p>
+    <pre style="overflow-x:auto">r_i = min_j |x_i - x_j|   such that   f(x_i) < 0.9 · f(x_j)</pre>
+    <p>I kept the 500 corners with the largest radii. A corner gets a large radius by being the strongest in its
+      area, so the points end up spread over the whole image. To keep it fast, I only ran ANMS on the 5,000
+      strongest corners.</p>
+    <figure><img src="4b/generated_outputs/b1_anms_set1_room.png" alt="anms room"><figcaption>Conference room. Top: 500 strongest corners. Bottom: 500 corners after ANMS.</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b1_anms_set2_hallway.png" alt="anms hallway"><figcaption>Hallway. Top: 500 strongest corners. Bottom: 500 corners after ANMS.</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b1_anms_set3_balcony.png" alt="anms balcony"><figcaption>Balcony. Top: 500 strongest corners. Bottom: 500 corners after ANMS.</figcaption></figure>
+
+    <h2>B.2: Feature Descriptor Extraction</h2>
+    <p>For each corner I took the 40×40 window around it and sampled every 5th pixel to get an 8×8 patch. I blurred
+      the image first (σ = 2) so the sampling doesn't alias, which means a corner that's off by a pixel or two still
+      gives almost the same patch. Then I normalized each patch to mean 0 and standard deviation 1, so a change in
+      brightness or contrast between the photos doesn't matter.</p>
+    <p>The patches are also rotated to match each corner's orientation (see B.5), since my second photos are all
+      rotated. The cyan line on each box shows that orientation.</p>
+    <figure><img src="4b/generated_outputs/b2_descriptors_set1_room.png" alt="descriptors room"><figcaption>Conference room: 6 random features, their 40×40 windows, and their 8×8 descriptors</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b2_descriptors_set2_hallway.png" alt="descriptors hallway"><figcaption>Hallway: 6 random features</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b2_descriptors_set3_balcony.png" alt="descriptors balcony"><figcaption>Balcony: 6 random features</figcaption></figure>
+
+    <h2>B.3: Feature Matching</h2>
+    <p>The error between two descriptors is the sum of squared differences. For each feature in image 1, I found its
+      nearest (1-NN) and second nearest (2-NN) feature in image 2. Following Lowe and the paper, I kept the match
+      only if</p>
+    <pre style="overflow-x:auto">e_1NN / e_2NN < 0.5</pre>
+    <p>The 2-NN is almost always a wrong match, so this keeps a match only if it's much better than a wrong one. I
+      picked 0.5 from Figure 6b in the paper, where there are almost no incorrect matches below that ratio.</p>
+    <figure><img src="4b/generated_outputs/b3_matches_set1_room.png" alt="matches room"><figcaption>Conference room: 54 matches</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b3_matches_set2_hallway.png" alt="matches hallway"><figcaption>Hallway: 177 matches</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b3_matches_set3_balcony.png" alt="matches balcony"><figcaption>Balcony: 133 matches</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b3_ratio_hist.png" alt="ratio histogram"><figcaption>e_1NN / e_2NN for every feature in all three sets, with the 0.5 threshold</figcaption></figure>
+    <p>Many of these matches are still wrong, especially on the repeating wood grain of the table and the ceiling
+      tiles. RANSAC takes care of those next.</p>
+
+    <h2>B.4: RANSAC for Robust Homography</h2>
+    <p>One bad match is enough to ruin a least squares homography, so I wrote 4-point RANSAC:</p>
+    <ol style="margin: 0 0 1.1rem 1.5rem">
+      <li>Pick 4 random matches and compute the exact H through them.</li>
+      <li>Count the inliers: matches where H maps the image 1 point within 4 px of its image 2 point.</li>
+      <li>Repeat 5,000 times and keep the largest set of inliers.</li>
+      <li>Recompute H with least squares on all of those inliers, using computeH from Part A.</li>
+    </ol>
+    <p>The wrong matches point in random directions, so they rarely agree with each other, while the correct ones all
+      agree on the same H.</p>
+    <figure><img src="4b/generated_outputs/b4_inliers_set1_room.png" alt="inliers room"><figcaption>Conference room: 25 of 54 matches are inliers</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b4_inliers_set2_hallway.png" alt="inliers hallway"><figcaption>Hallway: 103 of 177 matches are inliers</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b4_inliers_set3_balcony.png" alt="inliers balcony"><figcaption>Balcony: 58 of 133 matches are inliers</figcaption></figure>
+
+    <h3>Manual vs. Automatic Mosaics</h3>
+    <p>I built the mosaics with the same warping and two-band blending as Part A, just with the RANSAC H instead of
+      my hand-clicked one.</p>
+
+    <h3>Mosaic 1: Conference Room</h3>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set1_room_comparison.png" alt="room manual vs auto"><figcaption>Left: manual (Part A). Right: automatic.</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set1_room.jpg" alt="room auto mosaic"><figcaption>Automatic conference room mosaic</figcaption></figure>
+    <p>The manual mosaic has a doubled edge on the left side of the TV. The automatic one lines it up cleanly.</p>
+
+    <h3>Mosaic 2: Hallway</h3>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set2_hallway_comparison.png" alt="hallway manual vs auto"><figcaption>Left: manual (Part A). Right: automatic.</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set2_hallway.jpg" alt="hallway auto mosaic"><figcaption>Automatic hallway mosaic</figcaption></figure>
+    <p>The ghosting near the fire extinguishers in my manual mosaic is gone in the automatic one.</p>
+
+    <h3>Mosaic 3: Balcony</h3>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set3_balcony_comparison.png" alt="balcony manual vs auto"><figcaption>Left: manual (Part A). Right: automatic.</figcaption></figure>
+    <figure><img src="4b/generated_outputs/b4_mosaic_set3_balcony.jpg" alt="balcony auto mosaic"><figcaption>Automatic balcony mosaic</figcaption></figure>
+    <p>Both line up well here, but the drains and the grate are a little sharper in the automatic one.</p>
+
+    <p>The automatic H's land 11 to 16 px away from my clicked points on average, but the automatic mosaics look
+      better, so most of that difference is error in my clicks. RANSAC fits 25 to 100 points that all agree within
+      4 px, which is hard to beat by hand.</p>
+
+    <h2>B.5: Bells &amp; Whistles: Rotation Invariance</h2>
+    <p>My first version used axis-aligned patches, and it found almost nothing: 1, 11 and 7 matches, and when I
+      checked them against my Part A homographies, none were correct. The problem is that the second photo in every
+      set is rotated, so the same spot gives a different patch.</p>
+    <p>Following Section 2 of the paper, I gave each corner an orientation from the gradient of the image blurred
+      with σ = 4.5, θ = atan2(∂I/∂y, ∂I/∂x). Then I rotated the 8×8 sampling grid by θ before sampling (with bilinear
+      interpolation), so every patch is lined up with its own gradient no matter how the camera was turned.</p>
+    <p>To test it, I matched the room photo against a copy of itself rotated by 26°. That gave 10 matches before
+      and 286 after. On the real photos, the correct matches went from 0 to 15, 42 and 21, which was enough
+      for RANSAC to work.</p>
 
   </main>
 </body>
